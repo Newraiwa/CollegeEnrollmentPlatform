@@ -1,0 +1,921 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KU Credit Tracker</title>
+  <style>
+    :root{
+      /* KU-ish palette */
+      --ku-green: #006A4E;
+      --ku-green-2: #0B7D5B;
+      --ku-gold: #C9A227;
+      --bg: #F6F7F8;
+      --card: #FFFFFF;
+      --text: #1F2937;
+      --muted: #6B7280;
+      --border: #E5E7EB;
+      --danger: #B91C1C;
+      --shadow: 0 10px 25px rgba(0,0,0,.08);
+      --radius: 16px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Thai", sans-serif;
+      color:var(--text);
+      background:var(--bg);
+    }
+    a{color:inherit; text-decoration:none}
+    .app{
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+    }
+
+    /* Topbar */
+    .topbar{
+      background:linear-gradient(135deg,var(--ku-green), #004C38);
+      color:white;
+      padding:18px 18px;
+      box-shadow: var(--shadow);
+    }
+    .topbar .row{
+      max-width:1100px;
+      margin:0 auto;
+      display:flex;
+      align-items:center;
+      gap:14px;
+      justify-content:space-between;
+    }
+    .brand{
+      display:flex; align-items:center; gap:12px;
+    }
+    .logo{
+      width:40px; height:40px; border-radius:12px;
+      background: radial-gradient(circle at 30% 30%, var(--ku-gold), #8B6B12);
+      box-shadow: inset 0 0 0 3px rgba(255,255,255,.15);
+      position:relative;
+    }
+    .logo::after{
+      content:"KU";
+      position:absolute; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      font-weight:900; letter-spacing:.5px;
+      color:#0b3b2c;
+    }
+    .brand h1{
+      margin:0; font-size:16px; line-height:1.2;
+      font-weight:800;
+    }
+    .brand p{
+      margin:0; font-size:12px; color:rgba(255,255,255,.8)
+    }
+    .top-actions{
+      display:flex; gap:10px; align-items:center;
+    }
+    .chip{
+      padding:8px 10px;
+      border-radius:999px;
+      background: rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.18);
+      font-size:12px;
+    }
+    .btn{
+      border:none; cursor:pointer;
+      padding:10px 12px;
+      border-radius:12px;
+      font-weight:700;
+      background: var(--ku-gold);
+      color:#1b1401;
+      box-shadow: 0 10px 20px rgba(201,162,39,.25);
+      transition: transform .05s ease;
+    }
+    .btn:active{transform: translateY(1px)}
+    .btn.secondary{
+      background: rgba(255,255,255,.12);
+      color:white;
+      border:1px solid rgba(255,255,255,.25);
+      box-shadow:none;
+    }
+    .btn.danger{
+      background: #fee2e2;
+      color: var(--danger);
+      border:1px solid #fecaca;
+      box-shadow:none;
+    }
+
+    /* Layout */
+    .main{
+      max-width:1100px;
+      width:100%;
+      margin:18px auto;
+      padding:0 18px 24px;
+      display:grid;
+      grid-template-columns: 260px 1fr;
+      gap:16px;
+    }
+    @media (max-width: 920px){
+      .main{grid-template-columns: 1fr}
+    }
+
+    /* Sidebar */
+    .sidebar{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding:12px;
+      position: sticky;
+      top: 14px;
+      height: fit-content;
+    }
+    .profile{
+      padding:10px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(0,106,78,.08), rgba(201,162,39,.08));
+      border:1px dashed rgba(0,106,78,.2);
+      margin-bottom:10px;
+    }
+    .profile .name{font-weight:900}
+    .profile .meta{font-size:12px; color:var(--muted); margin-top:2px}
+    .nav{
+      display:flex; flex-direction:column; gap:6px;
+    }
+    .nav button{
+      width:100%;
+      text-align:left;
+      background:transparent;
+      border:1px solid transparent;
+      padding:10px 10px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight:700;
+      color: #0f2f25;
+      display:flex; align-items:center; justify-content:space-between;
+    }
+    .nav button:hover{background: rgba(0,106,78,.06)}
+    .nav button.active{
+      background: rgba(0,106,78,.10);
+      border-color: rgba(0,106,78,.18);
+    }
+    .nav small{color:var(--muted); font-weight:600}
+
+    /* Content cards */
+    .content{
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding:16px;
+    }
+    .card h2{
+      margin:0 0 10px 0;
+      font-size:18px;
+    }
+    .sub{
+      margin:0 0 14px 0;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    /* Dashboard grid */
+    .stats{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:12px;
+    }
+    @media (max-width: 720px){ .stats{grid-template-columns: 1fr} }
+    .stat{
+      border-radius: 14px;
+      border:1px solid var(--border);
+      padding:12px;
+      background: linear-gradient(180deg, rgba(0,106,78,.06), rgba(255,255,255,0));
+    }
+    .stat .label{font-size:12px; color:var(--muted); font-weight:700}
+    .stat .value{font-size:26px; font-weight:900; margin-top:6px}
+    .stat .hint{font-size:12px; color:var(--muted); margin-top:4px}
+
+    .progress-wrap{
+      margin-top:14px;
+      border:1px solid var(--border);
+      border-radius: 14px;
+      padding:12px;
+      background: linear-gradient(180deg, rgba(201,162,39,.08), rgba(255,255,255,0));
+    }
+    .progress-top{
+      display:flex; align-items:flex-end; justify-content:space-between; gap:10px;
+      margin-bottom:10px;
+    }
+    .progress-top .title{font-weight:900}
+    .progress{
+      height:12px;
+      border-radius:999px;
+      background:#EEF2F7;
+      border:1px solid var(--border);
+      overflow:hidden;
+    }
+    .bar{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, var(--ku-green), var(--ku-green-2), var(--ku-gold));
+      transition: width 0.4s ease;
+    }
+    .cat-grid{
+      display:grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap:12px;
+      margin-top:12px;
+    }
+    @media (max-width: 720px){ .cat-grid{grid-template-columns: 1fr} }
+    .cat{
+      border:1px solid var(--border);
+      border-radius: 14px;
+      padding:12px;
+      background:#fff;
+    }
+    .cat .row{
+      display:flex; justify-content:space-between; align-items:center;
+      gap:10px;
+      margin-bottom:8px;
+    }
+    .pill{
+      font-size:12px;
+      padding:5px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background: rgba(0,106,78,.06);
+      color:#064333;
+      font-weight:800;
+    }
+    .pill.warn{
+      background: rgba(201,162,39,.10);
+      color:#5a460b;
+      border-color: rgba(201,162,39,.25);
+    }
+    .mini{
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    /* Tables & forms */
+    .grid-2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width: 720px){ .grid-2{grid-template-columns:1fr} }
+
+    label{font-size:12px; color:var(--muted); font-weight:800; display:block; margin-bottom:6px}
+    input, select, textarea{
+      width:100%;
+      padding:10px 10px;
+      border-radius: 12px;
+      border:1px solid var(--border);
+      outline:none;
+      font-size:14px;
+      background:#fff;
+    }
+    textarea{min-height:90px; resize:vertical}
+    .form-actions{display:flex; gap:10px; margin-top:12px; flex-wrap:wrap}
+    .btn.ghost{
+      background:#fff;
+      border:1px solid var(--border);
+      box-shadow:none;
+      color:var(--text);
+    }
+
+    table{
+      width:100%;
+      border-collapse: collapse;
+      overflow:hidden;
+      border-radius: 14px;
+      border:1px solid var(--border);
+    }
+    th, td{
+      padding:10px;
+      border-bottom:1px solid var(--border);
+      font-size:13px;
+      text-align:left;
+      vertical-align:top;
+    }
+    th{background: rgba(0,106,78,.06); font-weight:900}
+    tr:last-child td{border-bottom:none}
+    .row-actions{display:flex; gap:8px; flex-wrap:wrap}
+    .tag{
+      display:inline-block;
+      font-size:12px;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:#fff;
+      color:var(--muted);
+      font-weight:800;
+    }
+    .tag.core{background: rgba(0,106,78,.08); color:#064333; border-color: rgba(0,106,78,.20)}
+    .tag.major{background: rgba(201,162,39,.12); color:#5a460b; border-color: rgba(201,162,39,.28)}
+    .tag.free{background: rgba(59,130,246,.10); color:#1e3a8a; border-color: rgba(59,130,246,.22)}
+
+    /* Auth */
+    .auth-wrap{
+      max-width: 900px;
+      margin: 18px auto;
+      padding: 0 18px 24px;
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap:16px;
+    }
+    @media (max-width: 920px){ .auth-wrap{grid-template-columns:1fr} }
+
+    .hero{
+      background: linear-gradient(135deg, rgba(0,106,78,.12), rgba(201,162,39,.12));
+      border:1px solid rgba(0,106,78,.18);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding:18px;
+      position:relative;
+      overflow:hidden;
+    }
+    .hero::before{
+      content:"";
+      position:absolute;
+      right:-80px; top:-80px;
+      width:200px; height:200px;
+      background: radial-gradient(circle, rgba(201,162,39,.35), rgba(201,162,39,0));
+      transform: rotate(12deg);
+    }
+    .hero h2{margin:0 0 8px 0; font-size:22px}
+    .hero p{margin:0; color:var(--muted); line-height:1.55}
+    .hero ul{margin:12px 0 0 18px; color:var(--muted)}
+    .toggle{
+      display:flex; gap:8px; margin-top:12px; flex-wrap:wrap
+    }
+    .toggle .btn{padding:10px 14px}
+    .footer{
+      max-width:1100px;
+      width:100%;
+      margin: 0 auto 18px;
+      padding: 0 18px;
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .hidden{display:none !important}
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="row">
+        <div class="brand">
+          <div class="logo" aria-hidden="true"></div>
+          <div>
+            <h1>KU Credit Tracker</h1>
+            <p>ระบบเช็คหน่วยกิต & แผนการเรียน (Mockup)</p>
+          </div>
+        </div>
+        <div class="top-actions">
+          <span class="chip" id="envChip">Demo Mode</span>
+          <button class="btn secondary" id="btnGoAuth">Login/Register</button>
+          <button class="btn" id="btnGoApp">Open App</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="auth-wrap" id="pageAuth">
+      <div class="hero">
+        <h2>ยินดีต้อนรับสู่ KU Credit Tracker</h2>
+        <p>เว็บสำหรับติดตามหน่วยกิตและเช็คว่า “เรียนอะไรแล้ว / เหลืออะไร” เหมาะสำหรับเดโมโปรเจกต์ฐานข้อมูล (MySQL + MongoDB)</p>
+        <ul>
+          <li>Dashboard สรุปหน่วยกิต + progress bar (ดึงข้อมูลจากคนที่ 2)</li>
+          <li>เพิ่มวิชาที่เรียนแล้ว (เลือกวิชาจากคนที่ 1)</li>
+          <li>คำนวณ “หมวดครบไหม / เหลืออีกกี่หน่วยกิต” ผ่าน API</li>
+        </ul>
+        <div class="toggle">
+          <button class="btn" onclick="demoLogin()">Login (Demo)</button>
+          <button class="btn secondary" onclick="switchAuth('register')">ไปหน้า Register</button>
+        </div>
+      </div>
+
+      <div class="card" id="authCard">
+        <h2 id="authTitle">Login</h2>
+        <p class="sub" id="authSub">เข้าสู่ระบบเพื่อดูแผนการเรียนและหน่วยกิตของคุณ</p>
+
+        <div class="grid-2">
+          <div>
+            <label>อีเมล</label>
+            <input id="email" placeholder="sxxxxxx@ku.th" />
+          </div>
+          <div>
+            <label>รหัสผ่าน</label>
+            <input id="password" type="password" placeholder="••••••••" />
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn" id="authPrimary" onclick="demoLogin()">เข้าสู่ระบบ</button>
+          <button class="btn ghost" id="authSecondary" onclick="switchAuth('register')">สมัครสมาชิก</button>
+        </div>
+
+        <hr style="border:none;border-top:1px solid var(--border);margin:14px 0">
+
+        <p class="sub" style="margin:0">
+          * หน้า Login/Register นี้เป็น mockup — ตอนเชื่อม API จริงให้คนที่ 1 ทำ CRUD users แล้วคนที่ 3 เรียกใช้งาน
+        </p>
+      </div>
+    </section>
+
+    <section class="main hidden" id="pageApp">
+      <aside class="sidebar">
+        <div class="profile">
+          <div class="name">นิสิต: <span id="pName">S001</span></div>
+          <div class="meta">คณะ/สาขา: วิทยาการคอมพิวเตอร์ • หลักสูตร 2026</div>
+        </div>
+
+        <div class="nav">
+          <button class="active" data-view="dashboard" onclick="setView('dashboard', this)">
+            Dashboard <small>สรุปหน่วยกิต</small>
+          </button>
+          <button data-view="addCourse" onclick="setView('addCourse', this)">
+            เพิ่มวิชาที่เรียน <small>Completed</small>
+          </button>
+          <button data-view="remaining" onclick="setView('remaining', this)">
+            ดูวิชาที่เหลือ <small>Remaining</small>
+          </button>
+          <button data-view="studyPlan" onclick="setView('studyPlan', this)">
+            จัดการ Study Plan <small>CRUD</small>
+          </button>
+        </div>
+
+        <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap">
+          <button class="btn secondary" onclick="resetDemo()">รีเซ็ตเดโม</button>
+          <button class="btn danger" onclick="logout()">ออกจากระบบ</button>
+        </div>
+      </aside>
+
+      <main class="content">
+        <section class="card" id="view_dashboard">
+          <h2>Dashboard — ภาพรวมหน่วยกิต</h2>
+          <p class="sub">สรุปหน่วยกิตสะสม (ประมวลผลผ่าน API ของคนที่ 2 - MongoDB)</p>
+
+          <div class="stats">
+            <div class="stat">
+              <div class="label">หน่วยกิตสะสม (Earned)</div>
+              <div class="value" id="stEarned">...</div>
+              <div class="hint">คำนวณจาก completed courses</div>
+            </div>
+            <div class="stat">
+              <div class="label">หน่วยกิตที่ต้องครบ (Required)</div>
+              <div class="value" id="stRequired">...</div>
+              <div class="hint">มาจาก Study Plan</div>
+            </div>
+            <div class="stat">
+              <div class="label">หน่วยกิตที่เหลือ (Remaining)</div>
+              <div class="value" id="stRemaining">...</div>
+              <div class="hint">Required - Earned (ตามหมวด)</div>
+            </div>
+          </div>
+
+          <div class="progress-wrap">
+            <div class="progress-top">
+              <div>
+                <div class="title">ความคืบหน้ารวม</div>
+                <div class="mini"><span id="pctText">0</span>% ของเป้าหมาย</div>
+              </div>
+              <span class="pill" id="statusPill">กำลังโหลด...</span>
+            </div>
+            <div class="progress" aria-label="progress bar">
+              <div class="bar" id="bar"></div>
+            </div>
+
+            <div class="cat-grid" id="catGrid"></div>
+          </div>
+        </section>
+
+        <section class="card hidden" id="view_addCourse">
+          <h2>เพิ่มวิชาที่เรียนแล้ว (Completed Course)</h2>
+          <p class="sub">เดโม: เลือกวิชาจาก Master Data (ดึงจาก MySQL คนที่ 1) ก่อนบันทึกลง MongoDB (คนที่ 2)</p>
+
+          <div class="grid-2">
+            <div style="grid-column: 1 / -1;">
+              <label>เลือกวิชา (ดึงจาก API /courses ของคนที่ 1)</label>
+              <select id="fCourseSelect" onchange="handleCourseSelection()">
+                <option value="">-- กำลังโหลดข้อมูลวิชา --</option>
+              </select>
+            </div>
+            <div>
+              <label>รหัสวิชา</label>
+              <input id="fCourseId" readonly style="background:#f3f4f6; color:var(--muted)" placeholder="เลือกวิชาด้านบน" />
+            </div>
+            <div>
+              <label>ชื่อวิชา</label>
+              <input id="fCourseName" readonly style="background:#f3f4f6; color:var(--muted)" placeholder="เลือกวิชาด้านบน" />
+            </div>
+            <div>
+              <label>หมวด</label>
+              <input id="fCategory" readonly style="background:#f3f4f6; color:var(--muted)" placeholder="เลือกวิชาด้านบน" />
+            </div>
+            <div>
+              <label>หน่วยกิต</label>
+              <input id="fCredits" type="number" readonly style="background:#f3f4f6; color:var(--muted)" placeholder="เลือกวิชาด้านบน" />
+            </div>
+            <div>
+              <label>เกรดที่ได้</label>
+              <select id="fGrade">
+                <option>A</option><option>B+</option><option>B</option><option>C+</option><option>C</option><option>D+</option><option>D</option><option>F</option>
+              </select>
+            </div>
+            <div>
+              <label>ปีการศึกษา/เทอม</label>
+              <input id="fTerm" placeholder="1/2026" />
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn" onclick="addCompleted()">เพิ่มลงประวัติการเรียน</button>
+            <button class="btn ghost" onclick="fillExampleCourse()">สุ่มตัวอย่าง</button>
+          </div>
+
+          <div style="margin-top:14px">
+            <h3 style="margin:0 0 10px 0; font-size:15px">รายการวิชาที่เรียนแล้ว</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>วิชา</th>
+                  <th>หมวด</th>
+                  <th>หน่วยกิต</th>
+                  <th>เกรด</th>
+                  <th>เทอม</th>
+                  <th>จัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="completedTbody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="card hidden" id="view_remaining">
+          <h2>ดูสิ่งที่เหลือ (Remaining)</h2>
+          <p class="sub">แสดงหมวดยังไม่ครบ + หน่วยกิตที่ต้องเพิ่ม (ประมวลผลผ่าน API ของคนที่ 2)</p>
+
+          <div id="remainingBox">กำลังโหลดข้อมูล...</div>
+
+          <div style="margin-top:12px" class="mini">
+            * ข้อมูลนี้มาจากการยิง API GET /api/summary/:studentId ไปยัง Backend ที่จัดการ Logic ไว้แล้ว
+          </div>
+        </section>
+
+        <section class="card hidden" id="view_studyPlan">
+          <h2>Study Plan (CRUD)</h2>
+          <p class="sub">เดโมการตั้งค่าแผนหน่วยกิตตามหมวด (MongoDB document)</p>
+
+          <div class="grid-2">
+            <div>
+              <label>Program</label>
+              <input id="pProgram" value="Computer Science" />
+            </div>
+            <div>
+              <label>Version</label>
+              <input id="pVersion" value="2026" />
+            </div>
+          </div>
+
+          <div style="margin-top:12px" class="grid-2">
+            <div>
+              <label>Core Required Credits</label>
+              <input id="pCore" type="number" value="30" min="0" />
+            </div>
+            <div>
+              <label>Major Required Credits</label>
+              <input id="pMajor" type="number" value="45" min="0" />
+            </div>
+            <div>
+              <label>Free Required Credits</label>
+              <input id="pFree" type="number" value="6" min="0" />
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn" onclick="savePlan()">บันทึก Study Plan</button>
+            <button class="btn ghost" onclick="loadPlan()">โหลด Study Plan</button>
+            <button class="btn danger" onclick="softDeletePlan()">ลบแผน (Soft delete)</button>
+          </div>
+
+          <div style="margin-top:12px">
+            <div class="mini"><b>Mongo document preview:</b></div>
+            <pre id="planPreview" style="background:#0b1220;color:#e5e7eb;padding:12px;border-radius:14px;overflow:auto;border:1px solid rgba(255,255,255,.06)"></pre>
+          </div>
+        </section>
+      </main>
+    </section>
+
+    <div class="footer">
+      © Mockup UI for Database Project • Theme: Kasetsart University (KU) • สามารถนำไปต่อเป็น React/Next + เชื่อม API จริงได้
+    </div>
+  </div>
+  <script>
+    const API_BASE = "/api";
+    const state = {
+      studentId: localStorage.getItem("studentId") || null,
+      coursesMaster: []
+    };
+
+    // ==========================================
+    // 2. Auth & UI Routing
+    // ==========================================
+    document.addEventListener("DOMContentLoaded", () => {
+      if (state.studentId) {
+        showApp();
+      } else {
+        showAuth();
+      }
+    });
+
+    function showAuth() {
+      document.getElementById("pageAuth").classList.remove("hidden");
+      document.getElementById("pageApp").classList.add("hidden");
+    }
+
+    function showApp() {
+      document.getElementById("pageAuth").classList.add("hidden");
+      document.getElementById("pageApp").classList.remove("hidden");
+      document.getElementById("pName").textContent = state.studentId;
+      
+      // เมื่อเข้าแอป โหลดข้อมูล Master Course ก่อน แล้วค่อย Refresh หน้า
+      fetchMasterCourses().then(() => {
+        refreshAll();
+      });
+    }
+
+    async function doLogin() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      
+      if(!email || !password) return alert("กรุณากรอกอีเมลและรหัสผ่าน");
+
+      try {
+        // [ยิง API คนที่ 1]: POST /auth/login
+        const res = await fetch(`${API_MYSQL}/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+
+        if (!res.ok) {
+          // Fallback สำหรับการเทสเดโม (ถ้าคนที่ 1 ยังทำ API ไม่เสร็จ)
+          console.warn("API Login failed, using DEMO fallback.");
+          state.studentId = email.split('@')[0].toUpperCase();
+        } else {
+          const data = await res.json();
+          state.studentId = data.studentId; 
+        }
+
+        localStorage.setItem("studentId", state.studentId);
+        showApp();
+
+      } catch (err) {
+        // Fallback เดโมหากเซิร์ฟเวอร์คนที่ 1 ยังไม่เปิด
+        console.warn("Server offline, using DEMO fallback.");
+        state.studentId = email.split('@')[0].toUpperCase();
+        localStorage.setItem("studentId", state.studentId);
+        showApp();
+      }
+    }
+
+    function doLogout() {
+      localStorage.removeItem("studentId");
+      state.studentId = null;
+      showAuth();
+    }
+
+    function switchAuth(mode){
+      const title = document.getElementById("authTitle");
+      title.textContent = mode === "register" ? "Register" : "Login";
+    }
+
+    function setView(view, btn) {
+      document.querySelectorAll(".nav button").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      document.querySelectorAll("[id^='view_']").forEach(v => v.classList.add("hidden"));
+      document.getElementById("view_" + view).classList.remove("hidden");
+      refreshAll();
+    }
+
+    async function refreshAll() {
+      await fetchSummary();
+      await fetchCompleted();
+    }
+
+    // ==========================================
+    // 3. Data Loaders (เรียก API)
+    // ==========================================
+
+    // โหลดวิชาทั้งหมดมาใส่ Dropdown (API คนที่ 1)
+    async function fetchMasterCourses() {
+      try {
+        const res = await fetch(`${API_MYSQL}/courses`);
+        if(!res.ok) throw new Error("Load failed");
+        state.coursesMaster = await res.json();
+      } catch (err) {
+        // Mock data ชั่วคราวถ้า API ยังไม่มา
+        state.coursesMaster = [
+          { courseId: "CS101", courseName: "Programming I", category: "Core", credits: 3 },
+          { courseId: "CS201", courseName: "Data Structures", category: "Major", credits: 3 },
+          { courseId: "EN101", courseName: "English I", category: "Free", credits: 3 }
+        ];
+      }
+
+      const select = document.getElementById("fCourseSelect");
+      select.innerHTML = `<option value="">-- โปรดเลือกวิชา --</option>` + 
+        state.coursesMaster.map(c => `<option value="${c.courseId}">${c.courseId} - ${c.courseName}</option>`).join("");
+    }
+
+    // เลือก Dropdown แล้วข้อมูลมาเติมในช่องต่างๆ เอง
+    function autoFillCourseDetails() {
+      const val = document.getElementById("fCourseSelect").value;
+      const c = state.coursesMaster.find(x => x.courseId === val);
+      if(c) {
+        document.getElementById("fCourseId").value = c.courseId;
+        document.getElementById("fCourseName").value = c.courseName;
+        document.getElementById("fCategory").value = c.category;
+        document.getElementById("fCredits").value = c.credits;
+      } else {
+        document.getElementById("fCourseId").value = "";
+        document.getElementById("fCourseName").value = "";
+        document.getElementById("fCategory").value = "";
+        document.getElementById("fCredits").value = "";
+      }
+    }
+
+    // โหลดหน้า Dashboard & Remaining (API คนที่ 2)
+    async function fetchSummary() {
+      let data = null;
+      try {
+        const res = await fetch(`${API_MONGO}/summary/${state.studentId}`);
+        if(!res.ok) throw new Error("Load failed");
+        data = await res.json();
+      } catch (err) {
+        // Mock data หากยิงไม่ผ่าน
+        data = {
+          totalEarned: 6, totalRequired: 81, remainingTotal: 75,
+          categorySummary: [
+            { category: "Core", required: 30, earned: 3, remaining: 27, completed: false },
+            { category: "Major", required: 45, earned: 3, remaining: 42, completed: false },
+            { category: "Free", required: 6, earned: 0, remaining: 6, completed: false }
+          ]
+        };
+      }
+
+      // --- Render Dashboard ---
+      document.getElementById("stEarned").textContent = data.totalEarned;
+      document.getElementById("stRequired").textContent = data.totalRequired;
+      document.getElementById("stRemaining").textContent = data.remainingTotal;
+
+      const pct = data.totalRequired === 0 ? 0 : Math.min(100, Math.round((data.totalEarned / data.totalRequired) * 100));
+      document.getElementById("pctText").textContent = pct;
+      document.getElementById("bar").style.width = pct + "%";
+      document.getElementById("statusPill").textContent = pct >= 100 ? "ครบตามแผนแล้ว 🎉" : "กำลังดำเนินการ";
+      document.getElementById("statusPill").className = pct >= 100 ? "pill" : "pill warn";
+
+      const grid = document.getElementById("catGrid");
+      grid.innerHTML = data.categorySummary.map(cat => `
+        <div class="cat">
+          <div class="row">
+            <div><div style="font-weight:900">${cat.category}</div><div class="mini">ได้ ${cat.earned} / ต้อง ${cat.required}</div></div>
+            ${cat.completed ? `<span class="pill">ครบแล้ว</span>` : `<span class="pill warn">เหลือ ${cat.remaining}</span>`}
+          </div>
+          <div class="progress" style="height:10px">
+            <div class="bar" style="width:${cat.required===0?0:Math.min(100, Math.round((cat.earned/cat.required)*100))}%"></div>
+          </div>
+        </div>
+      `).join("");
+
+      // --- Render Remaining ---
+      const remBox = document.getElementById("remainingBox");
+      const notDone = data.categorySummary.filter(c => !c.completed);
+      
+      if(notDone.length === 0){
+        remBox.innerHTML = `<div class="card" style="box-shadow:none; background: linear-gradient(180deg, rgba(0,106,78,.08), #fff)"><b>ครบตามแผนทุกหมวดแล้ว 🎉</b></div>`;
+      } else {
+        remBox.innerHTML = notDone.map(c => `
+          <div class="card" style="box-shadow:none; margin-bottom:10px">
+            <div style="display:flex; justify-content:space-between; gap:10px; align-items:center">
+              <div><b>${c.category}</b><div class="mini">ได้ ${c.earned} / ต้อง ${c.required}</div></div>
+              <span class="pill warn">เหลือ ${c.remaining} หน่วยกิต</span>
+            </div>
+          </div>
+        `).join("");
+      }
+    }
+
+    // โหลดประวัติการเรียน (API คนที่ 2)
+    async function fetchCompleted() {
+      let rows = [];
+      try {
+        const res = await fetch(`${API_MONGO}/completed/${state.studentId}`);
+        if(!res.ok) throw new Error("Load failed");
+        rows = await res.json();
+      } catch (err) {
+        // Mock data หากยิงไม่ผ่าน
+        rows = [
+          { _id:"c1", courseId:"CS101", courseName:"Programming I", category:"Core", credits:3, grade:"A", term:"1/2026" }
+        ];
+      }
+
+      const tbody = document.getElementById("completedTbody");
+      if(rows.length === 0){
+        tbody.innerHTML = `<tr><td colspan="6" class="mini">ยังไม่มีรายการวิชาที่เรียนแล้ว</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = rows.map(c => `
+        <tr>
+          <td><b>${c.courseId}</b><div class="mini">${c.courseName}</div></td>
+          <td><span class="tag">${c.category}</span></td>
+          <td>${c.credits}</td>
+          <td>${c.grade}</td>
+          <td>${c.term}</td>
+          <td>
+            <div class="row-actions">
+              <button class="btn ghost" onclick="updateGrade('${c._id}', '${c.grade}')">แก้เกรด</button>
+              <button class="btn danger" onclick="softDeleteCourse('${c._id}')">ลบ</button>
+            </div>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    // ==========================================
+    // 4. Actions (ยิง API ไปปรับปรุงข้อมูล)
+    // ==========================================
+
+    // [POST] เพิ่มวิชา
+    async function addCompleted() {
+      const courseId = document.getElementById("fCourseId").value;
+      const grade = document.getElementById("fGrade").value;
+      const term = document.getElementById("fTerm").value;
+
+      if(!courseId || !term) return alert("กรุณาเลือกวิชาและกรอกเทอม");
+
+      const payload = { studentId: state.studentId, courseId, grade, term };
+
+      try {
+        await fetch(`${API_MONGO}/completed`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        
+        // เคลียร์ฟอร์ม
+        document.getElementById("fCourseSelect").value = "";
+        autoFillCourseDetails();
+        document.getElementById("fTerm").value = "";
+
+        // ดึงข้อมูลใหม่มาแสดง
+        await refreshAll();
+        alert("บันทึกสำเร็จ");
+      } catch (err) {
+        alert("จำลองการเพิ่มข้อมูล (เนื่องจาก API ไม่พร้อม)");
+        await refreshAll();
+      }
+    }
+
+    // [PUT] แก้เกรด
+    async function updateGrade(id, oldGrade) {
+      const newGrade = prompt(`กรุณากรอกเกรดใหม่:`, oldGrade);
+      if(!newGrade) return;
+
+      try {
+        await fetch(`${API_MONGO}/completed/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ grade: newGrade.toUpperCase() })
+        });
+        await refreshAll();
+      } catch (err) {
+        alert("จำลองการแก้ข้อมูลสำเร็จ");
+      }
+    }
+
+    // [DELETE] ลบวิชา (Soft delete)
+    async function softDeleteCourse(id) {
+      if(!confirm("ต้องการลบวิชานี้ใช่ไหม?")) return;
+
+      try {
+        await fetch(`${API_MONGO}/completed/${id}`, { method: "DELETE" });
+        await refreshAll();
+      } catch (err) {
+        alert("จำลองการลบข้อมูลสำเร็จ");
+      }
+    }
+
+  </script>
+</body>
+</html>
+
