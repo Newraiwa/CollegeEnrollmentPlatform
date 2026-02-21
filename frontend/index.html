@@ -377,13 +377,11 @@
           <div class="logo" aria-hidden="true"></div>
           <div>
             <h1>KU Credit Tracker</h1>
-            <p>ระบบเช็คหน่วยกิต & แผนการเรียน (Mockup)</p>
+            <p>ระบบเช็คหน่วยกิต & แผนการเรียน (Integrated with Backend)</p>
           </div>
         </div>
         <div class="top-actions">
-          <span class="chip" id="envChip">Demo Mode</span>
-          <button class="btn secondary" id="btnGoAuth">Login/Register</button>
-          <button class="btn" id="btnGoApp">Open App</button>
+          <span class="chip" id="envChip">Online</span>
         </div>
       </div>
     </header>
@@ -391,26 +389,25 @@
     <section class="auth-wrap" id="pageAuth">
       <div class="hero">
         <h2>ยินดีต้อนรับสู่ KU Credit Tracker</h2>
-        <p>เว็บสำหรับติดตามหน่วยกิตและเช็คว่า “เรียนอะไรแล้ว / เหลืออะไร” เหมาะสำหรับเดโมโปรเจกต์ฐานข้อมูล (MySQL + MongoDB)</p>
+        <p>เว็บสำหรับติดตามหน่วยกิตและเช็คว่า “เรียนอะไรแล้ว / เหลืออะไร” เชื่อมต่อกับ Backend อัตโนมัติ</p>
         <ul>
-          <li>Dashboard สรุปหน่วยกิต + progress bar (ดึงข้อมูลจากคนที่ 2)</li>
-          <li>เพิ่มวิชาที่เรียนแล้ว (เลือกวิชาจากคนที่ 1)</li>
-          <li>คำนวณ “หมวดครบไหม / เหลืออีกกี่หน่วยกิต” ผ่าน API</li>
+          <li>Dashboard สรุปหน่วยกิต + progress bar (จากข้อมูลจริง)</li>
+          <li>จัดการรายวิชาและหน่วยกิตตามโครงสร้างหลักสูตร</li>
+          <li>เชื่อมต่อ API Backend 100%</li>
         </ul>
         <div class="toggle">
-          <button class="btn" onclick="demoLogin()">Login (Demo)</button>
-          <button class="btn secondary" onclick="switchAuth('register')">ไปหน้า Register</button>
+          <button class="btn" onclick="demoLogin()">Login (Demo Data Account)</button>
         </div>
       </div>
 
       <div class="card" id="authCard">
-        <h2 id="authTitle">Login</h2>
-        <p class="sub" id="authSub">เข้าสู่ระบบเพื่อดูแผนการเรียนและหน่วยกิตของคุณ</p>
+        <h2 id="authTitle">เข้าสู่ระบบ</h2>
+        <p class="sub" id="authSub">จัดการแผนการเรียนและหน่วยกิตของคุณ</p>
 
         <div class="grid-2">
           <div>
-            <label>อีเมล</label>
-            <input id="email" placeholder="sxxxxxx@ku.th" />
+            <label>อีเมล หรือ รหัสนิสิต</label>
+            <input id="email" placeholder="เช่น s65xxxxxx@ku.th" />
           </div>
           <div>
             <label>รหัสผ่าน</label>
@@ -418,24 +415,18 @@
           </div>
         </div>
 
-        <div class="form-actions">
-          <button class="btn" id="authPrimary" onclick="demoLogin()">เข้าสู่ระบบ</button>
-          <button class="btn ghost" id="authSecondary" onclick="switchAuth('register')">สมัครสมาชิก</button>
+        <div class="form-actions" id="authActionBox">
+          <button class="btn" id="authPrimary" onclick="handleAuthAction()">เข้าสู่ระบบ</button>
+          <button class="btn ghost" id="authSecondary" onclick="toggleAuthMode()">สมัครสมาชิก</button>
         </div>
-
-        <hr style="border:none;border-top:1px solid var(--border);margin:14px 0">
-
-        <p class="sub" style="margin:0">
-          * หน้า Login/Register นี้เป็น mockup — ตอนเชื่อม API จริงให้คนที่ 1 ทำ CRUD users แล้วคนที่ 3 เรียกใช้งาน
-        </p>
       </div>
     </section>
 
     <section class="main hidden" id="pageApp">
       <aside class="sidebar">
         <div class="profile">
-          <div class="name">นิสิต: <span id="pName">S001</span></div>
-          <div class="meta">คณะ/สาขา: วิทยาการคอมพิวเตอร์ • หลักสูตร 2026</div>
+          <div class="name">นิสิต: <span id="pName"></span></div>
+          <div class="meta">หลักสูตร <span id="pVersionText">2026</span></div>
         </div>
 
         <div class="nav">
@@ -454,30 +445,29 @@
         </div>
 
         <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap">
-          <button class="btn secondary" onclick="resetDemo()">รีเซ็ตเดโม</button>
-          <button class="btn danger" onclick="logout()">ออกจากระบบ</button>
+          <button class="btn danger" onclick="doLogout()">ออกจากระบบ</button>
         </div>
       </aside>
 
       <main class="content">
         <section class="card" id="view_dashboard">
           <h2>Dashboard — ภาพรวมหน่วยกิต</h2>
-          <p class="sub">สรุปหน่วยกิตสะสม (ประมวลผลผ่าน API ของคนที่ 2 - MongoDB)</p>
+          <p class="sub">สรุปหน่วยกิตสะสม (ประมวลผลผ่าน API MongoDB)</p>
 
           <div class="stats">
             <div class="stat">
               <div class="label">หน่วยกิตสะสม (Earned)</div>
-              <div class="value" id="stEarned">...</div>
+              <div class="value" id="stEarned">0</div>
               <div class="hint">คำนวณจาก completed courses</div>
             </div>
             <div class="stat">
               <div class="label">หน่วยกิตที่ต้องครบ (Required)</div>
-              <div class="value" id="stRequired">...</div>
+              <div class="value" id="stRequired">0</div>
               <div class="hint">มาจาก Study Plan</div>
             </div>
             <div class="stat">
               <div class="label">หน่วยกิตที่เหลือ (Remaining)</div>
-              <div class="value" id="stRemaining">...</div>
+              <div class="value" id="stRemaining">0</div>
               <div class="hint">Required - Earned (ตามหมวด)</div>
             </div>
           </div>
@@ -500,30 +490,30 @@
 
         <section class="card hidden" id="view_addCourse">
           <h2>เพิ่มวิชาที่เรียนแล้ว (Completed Course)</h2>
-          <p class="sub">เดโม: เลือกวิชาจาก Master Data (ดึงจาก MySQL คนที่ 1) ก่อนบันทึกลง MongoDB (คนที่ 2)</p>
+          <p class="sub">บันทึกวิชาที่เรียนจบแล้วลงฐานข้อมูล</p>
 
           <div class="grid-2">
             <div style="grid-column: 1 / -1;">
-              <label>เลือกวิชา (ดึงจาก API /courses ของคนที่ 1)</label>
-              <select id="fCourseSelect" onchange="handleCourseSelection()">
+              <label>เลือกวิชา (จากข้อมูล Master)</label>
+              <select id="fCourseSelect" onchange="autoFillCourseDetails()">
                 <option value="">-- กำลังโหลดข้อมูลวิชา --</option>
               </select>
             </div>
             <div>
               <label>รหัสวิชา</label>
-              <input id="fCourseId" readonly style="background:#f3f4f6; color:var(--muted)" placeholder="เลือกวิชาด้านบน" />
+              <input id="fCourseId" placeholder="เช่น 01418112" />
             </div>
             <div>
               <label>ชื่อวิชา</label>
-              <input id="fCourseName" readonly style="background:#f3f4f6; color:var(--muted)" placeholder="เลือกวิชาด้านบน" />
+              <input id="fCourseName" placeholder="เช่น Programming I" />
             </div>
             <div>
-              <label>หมวด</label>
-              <input id="fCategory" readonly style="background:#f3f4f6; color:var(--muted)" placeholder="เลือกวิชาด้านบน" />
+              <label>หมวดหมู่ (อ้างอิงตาม Study Plan)</label>
+              <input id="fCategory" placeholder="เช่น Core, Major, Free" />
             </div>
             <div>
               <label>หน่วยกิต</label>
-              <input id="fCredits" type="number" readonly style="background:#f3f4f6; color:var(--muted)" placeholder="เลือกวิชาด้านบน" />
+              <input id="fCredits" type="number" placeholder="เช่น 3" />
             </div>
             <div>
               <label>เกรดที่ได้</label>
@@ -538,8 +528,7 @@
           </div>
 
           <div class="form-actions">
-            <button class="btn" onclick="addCompleted()">เพิ่มลงประวัติการเรียน</button>
-            <button class="btn ghost" onclick="fillExampleCourse()">สุ่มตัวอย่าง</button>
+            <button class="btn" onclick="addCompleted()">บันทึกรายวิชา</button>
           </div>
 
           <div style="margin-top:14px">
@@ -562,26 +551,22 @@
 
         <section class="card hidden" id="view_remaining">
           <h2>ดูสิ่งที่เหลือ (Remaining)</h2>
-          <p class="sub">แสดงหมวดยังไม่ครบ + หน่วยกิตที่ต้องเพิ่ม (ประมวลผลผ่าน API ของคนที่ 2)</p>
+          <p class="sub">แสดงหมวดยังไม่ครบ + หน่วยกิตที่ต้องเพิ่ม</p>
 
           <div id="remainingBox">กำลังโหลดข้อมูล...</div>
-
-          <div style="margin-top:12px" class="mini">
-            * ข้อมูลนี้มาจากการยิง API GET /api/summary/:studentId ไปยัง Backend ที่จัดการ Logic ไว้แล้ว
-          </div>
         </section>
 
         <section class="card hidden" id="view_studyPlan">
           <h2>Study Plan (CRUD)</h2>
-          <p class="sub">เดโมการตั้งค่าแผนหน่วยกิตตามหมวด (MongoDB document)</p>
+          <p class="sub">ตั้งค่าแผนหน่วยกิตตามหมวดของนิสิต (ตรงกับ Schema ของ Backend)</p>
 
           <div class="grid-2">
             <div>
-              <label>Program</label>
+              <label>Program (หลักสูตร)</label>
               <input id="pProgram" value="Computer Science" />
             </div>
             <div>
-              <label>Version</label>
+              <label>Version (ปีที่ปรับปรุง)</label>
               <input id="pVersion" value="2026" />
             </div>
           </div>
@@ -602,34 +587,38 @@
           </div>
 
           <div class="form-actions">
-            <button class="btn" onclick="savePlan()">บันทึก Study Plan</button>
-            <button class="btn ghost" onclick="loadPlan()">โหลด Study Plan</button>
-            <button class="btn danger" onclick="softDeletePlan()">ลบแผน (Soft delete)</button>
+            <button class="btn" onclick="savePlan()">บันทึก / อัปเดต Study Plan</button>
+            <button class="btn ghost" onclick="loadPlan()">โหลด Study Plan ซ้ำ</button>
+            <button class="btn danger" onclick="softDeletePlan()">ลบแผน (Soft Delete)</button>
           </div>
 
           <div style="margin-top:12px">
-            <div class="mini"><b>Mongo document preview:</b></div>
-            <pre id="planPreview" style="background:#0b1220;color:#e5e7eb;padding:12px;border-radius:14px;overflow:auto;border:1px solid rgba(255,255,255,.06)"></pre>
+            <div class="mini"><b>Mongo Document Preview:</b></div>
+            <pre id="planPreview" style="background:#0b1220;color:#e5e7eb;padding:12px;border-radius:14px;overflow:auto;border:1px solid rgba(255,255,255,.06)">ยังไม่ได้โหลดข้อมูล</pre>
           </div>
         </section>
       </main>
     </section>
 
     <div class="footer">
-      © Mockup UI for Database Project • Theme: Kasetsart University (KU) • สามารถนำไปต่อเป็น React/Next + เชื่อม API จริงได้
+      © KU Credit Tracker (Backend Variable Matched Version)
     </div>
   </div>
+
   <script>
+    // ==========================================
+    // 1. Config & State
+    // ==========================================
     const API_BASE = "http://localhost:8080/api";
-    const API_MYSQL = API_BASE; 
-    const API_MONGO = API_BASE;
+    
     const state = {
       studentId: localStorage.getItem("studentId") || null,
-      coursesMaster: []
+      coursesMaster: [],
+      authMode: 'login'
     };
 
     // ==========================================
-    // 2. Auth & UI Routing
+    // 2. Init & Auth
     // ==========================================
     document.addEventListener("DOMContentLoaded", () => {
       if (state.studentId) {
@@ -649,79 +638,102 @@
       document.getElementById("pageApp").classList.remove("hidden");
       document.getElementById("pName").textContent = state.studentId;
       
-      // เมื่อเข้าแอป โหลดข้อมูล Master Course ก่อน แล้วค่อย Refresh หน้า
       fetchMasterCourses().then(() => {
         refreshAll();
+        loadPlan();
       });
     }
 
+    function toggleAuthMode() {
+      state.authMode = state.authMode === 'login' ? 'register' : 'login';
+      const title = document.getElementById("authTitle");
+      const primaryBtn = document.getElementById("authPrimary");
+      const secondaryBtn = document.getElementById("authSecondary");
+
+      if(state.authMode === 'register') {
+        title.textContent = "สมัครสมาชิก";
+        primaryBtn.textContent = "ยืนยันการสมัคร";
+        secondaryBtn.textContent = "กลับไปเข้าสู่ระบบ";
+      } else {
+        title.textContent = "เข้าสู่ระบบ";
+        primaryBtn.textContent = "เข้าสู่ระบบ";
+        secondaryBtn.textContent = "สมัครสมาชิก";
+      }
+    }
+
+    async function handleAuthAction() {
+      if(state.authMode === 'login') await doLogin();
+      else await doRegister();
+    }
+
+    // ฟังก์ชันช่วย Reset และสร้าง Data อัตโนมัติ (เชื่อมกับ /api/demo/reset)
     async function demoLogin() {
+      document.getElementById("email").value = "S001";
+      document.getElementById("password").value = "demo";
+      
       try {
-        const res = await fetch(`${API_BASE}/demo/reset`, {
+        await fetch(`${API_BASE}/demo/reset`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ studentId: "S001" })
         });
-
-        if (!res.ok) throw new Error("Reset failed");
-
-        const data = await res.json();
-        console.log(data);
-
-        localStorage.setItem("studentId", "S001");
-        alert("Demo data loaded");
-        location.reload();
-
       } catch (err) {
-        alert("Backend not connected");
+        console.warn("Demo reset API warning:", err);
       }
+
+      await doLogin();
     }
+
     async function doLogin() {
       const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+      if(!email) return alert("กรุณากรอกข้อมูลเพื่อเข้าสู่ระบบ");
       
-      if(!email || !password) return alert("กรุณากรอกอีเมลและรหัสผ่าน");
-
+      // ให้รองรับทั้งการพิมพ์ sXXXXXX@ku.th หรือรหัสนิสิตตรงๆ
+      state.studentId = email.includes('@') ? email.split('@')[0].toUpperCase() : email.toUpperCase();
+      localStorage.setItem("studentId", state.studentId);
+      
       try {
-        // [ยิง API คนที่ 1]: POST /auth/login
-        const res = await fetch(`${API_BASE}/auth/login`, {
+        // อ้างอิงจากระบบของผู้ใช้ที่มี users.js และรองรับ /login
+        await fetch(`${API_BASE}/users/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password })
+          body: JSON.stringify({ email: state.studentId })
         });
+      } catch(e) {} 
 
-        if (!res.ok) {
-          // Fallback สำหรับการเทสเดโม (ถ้าคนที่ 1 ยังทำ API ไม่เสร็จ)
-          console.warn("API Login failed, using DEMO fallback.");
-          state.studentId = email.split('@')[0].toUpperCase();
-        } else {
-          const data = await res.json();
-          state.studentId = data.studentId; 
-        }
+      showApp();
+    }
 
-        localStorage.setItem("studentId", state.studentId);
-        showApp();
-
-      } catch (err) {
-        // Fallback เดโมหากเซิร์ฟเวอร์คนที่ 1 ยังไม่เปิด
-        console.warn("Server offline, using DEMO fallback.");
-        state.studentId = email.split('@')[0].toUpperCase();
-        localStorage.setItem("studentId", state.studentId);
-        showApp();
+    async function doRegister() {
+      const email = document.getElementById("email").value;
+      if(!email) return alert("กรุณากรอกข้อมูล");
+      
+      try {
+        await fetch(`${API_BASE}/users/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email })
+        });
+        alert("สมัครสมาชิกสำเร็จ กรุณาเข้าสู่ระบบ");
+        toggleAuthMode();
+      } catch(e) {
+        alert("จำลองการสมัครสมาชิกสำเร็จ (Demo Mode)");
+        toggleAuthMode();
       }
     }
 
     function doLogout() {
+      if(!confirm("คุณต้องการออกจากระบบใช่หรือไม่?")) return;
       localStorage.removeItem("studentId");
       state.studentId = null;
+      document.getElementById("email").value = "";
+      document.getElementById("password").value = "";
       showAuth();
     }
 
-    function switchAuth(mode){
-      const title = document.getElementById("authTitle");
-      title.textContent = mode === "register" ? "Register" : "Login";
-    }
-
+    // ==========================================
+    // 3. UI Routing & Fetchers
+    // ==========================================
     function setView(view, btn) {
       document.querySelectorAll(".nav button").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
@@ -735,22 +747,18 @@
       await fetchCompleted();
     }
 
-    // ==========================================
-    // 3. Data Loaders (เรียก API)
-    // ==========================================
-
-    // โหลดวิชาทั้งหมดมาใส่ Dropdown (API คนที่ 1)
     async function fetchMasterCourses() {
       try {
         const res = await fetch(`${API_BASE}/courses`);
-        if(!res.ok) throw new Error("Load failed");
+        if(!res.ok) throw new Error();
         state.coursesMaster = await res.json();
       } catch (err) {
-        // Mock data ชั่วคราวถ้า API ยังไม่มา
+        // Fallback Data ถ้ายังไม่ได้ทำ API Master courses
         state.coursesMaster = [
-          { courseId: "CS101", courseName: "Programming I", category: "Core", credits: 3 },
-          { courseId: "CS201", courseName: "Data Structures", category: "Major", credits: 3 },
-          { courseId: "EN101", courseName: "English I", category: "Free", credits: 3 }
+          { courseId: "01418112", courseName: "Programming I", category: "Core", credits: 3 },
+          { courseId: "01418113", courseName: "Programming II", category: "Core", credits: 3 },
+          { courseId: "01418211", courseName: "Software Engineering", category: "Major", credits: 3 },
+          { courseId: "01355112", courseName: "English I", category: "Free", credits: 3 }
         ];
       }
 
@@ -759,7 +767,6 @@
         state.coursesMaster.map(c => `<option value="${c.courseId}">${c.courseId} - ${c.courseName}</option>`).join("");
     }
 
-    // เลือก Dropdown แล้วข้อมูลมาเติมในช่องต่างๆ เอง
     function autoFillCourseDetails() {
       const val = document.getElementById("fCourseSelect").value;
       const c = state.coursesMaster.find(x => x.courseId === val);
@@ -768,46 +775,50 @@
         document.getElementById("fCourseName").value = c.courseName;
         document.getElementById("fCategory").value = c.category;
         document.getElementById("fCredits").value = c.credits;
-      } else {
-        document.getElementById("fCourseId").value = "";
-        document.getElementById("fCourseName").value = "";
-        document.getElementById("fCategory").value = "";
-        document.getElementById("fCredits").value = "";
       }
     }
 
-    // โหลดหน้า Dashboard & Remaining (API คนที่ 2)
+    // ==========================================
+    // 4. Dashboard (Summary Data)
+    // ==========================================
     async function fetchSummary() {
       let data = null;
       try {
         const res = await fetch(`${API_BASE}/summary/${state.studentId}`);
-        if(!res.ok) throw new Error("Load failed");
+        if(!res.ok) throw new Error();
         data = await res.json();
       } catch (err) {
-        // Mock data หากยิงไม่ผ่าน
-        data = {
-          totalEarned: 6, totalRequired: 81, remainingTotal: 75,
-          categorySummary: [
-            { category: "Core", required: 30, earned: 3, remaining: 27, completed: false },
-            { category: "Major", required: 45, earned: 3, remaining: 42, completed: false },
-            { category: "Free", required: 6, earned: 0, remaining: 6, completed: false }
-          ]
-        };
+        document.getElementById("statusPill").textContent = "โปรดสร้าง Study Plan ก่อน";
+        return;
       }
 
-      // --- Render Dashboard ---
-      document.getElementById("stEarned").textContent = data.totalEarned;
-      document.getElementById("stRequired").textContent = data.totalRequired;
-      document.getElementById("stRemaining").textContent = data.remainingTotal;
+      // ดึงค่าตามตัวแปร Backend summary.service.ts
+      // data.totalCredits
+      // data.categories -> [ { category, required, earned, remaining, completed } ]
+      
+      const totalEarned = data.totalCredits || 0;
+      let totalRequired = 0;
+      let remainingTotal = 0;
 
-      const pct = data.totalRequired === 0 ? 0 : Math.min(100, Math.round((data.totalEarned / data.totalRequired) * 100));
+      if (data.categories) {
+        data.categories.forEach(c => {
+          totalRequired += c.required;
+          remainingTotal += c.remaining;
+        });
+      }
+
+      document.getElementById("stEarned").textContent = totalEarned;
+      document.getElementById("stRequired").textContent = totalRequired;
+      document.getElementById("stRemaining").textContent = remainingTotal;
+
+      const pct = totalRequired === 0 ? 0 : Math.min(100, Math.round((totalEarned / totalRequired) * 100));
       document.getElementById("pctText").textContent = pct;
       document.getElementById("bar").style.width = pct + "%";
       document.getElementById("statusPill").textContent = pct >= 100 ? "ครบตามแผนแล้ว 🎉" : "กำลังดำเนินการ";
       document.getElementById("statusPill").className = pct >= 100 ? "pill" : "pill warn";
 
       const grid = document.getElementById("catGrid");
-      grid.innerHTML = data.categorySummary.map(cat => `
+      grid.innerHTML = (data.categories || []).map(cat => `
         <div class="cat">
           <div class="row">
             <div><div style="font-weight:900">${cat.category}</div><div class="mini">ได้ ${cat.earned} / ต้อง ${cat.required}</div></div>
@@ -819,9 +830,8 @@
         </div>
       `).join("");
 
-      // --- Render Remaining ---
       const remBox = document.getElementById("remainingBox");
-      const notDone = data.categorySummary.filter(c => !c.completed);
+      const notDone = (data.categories || []).filter(c => !c.completed);
       
       if(notDone.length === 0){
         remBox.innerHTML = `<div class="card" style="box-shadow:none; background: linear-gradient(180deg, rgba(0,106,78,.08), #fff)"><b>ครบตามแผนทุกหมวดแล้ว 🎉</b></div>`;
@@ -837,23 +847,19 @@
       }
     }
 
-    // โหลดประวัติการเรียน (API คนที่ 2)
+    // ==========================================
+    // 5. Completed Courses (Add / Edit / Delete)
+    // ==========================================
     async function fetchCompleted() {
       let rows = [];
       try {
         const res = await fetch(`${API_BASE}/completed-courses/${state.studentId}`);
-        if(!res.ok) throw new Error("Load failed");
-        rows = await res.json();
-      } catch (err) {
-        // Mock data หากยิงไม่ผ่าน
-        rows = [
-          { _id:"c1", courseId:"CS101", courseName:"Programming I", category:"Core", credits:3, grade:"A", term:"1/2026" }
-        ];
-      }
+        if(res.ok) rows = await res.json();
+      } catch (err) {}
 
       const tbody = document.getElementById("completedTbody");
       if(rows.length === 0){
-        tbody.innerHTML = `<tr><td colspan="6" class="mini">ยังไม่มีรายการวิชาที่เรียนแล้ว</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="mini" style="text-align:center;">ยังไม่มีรายการวิชาที่เรียนแล้ว</td></tr>`;
         return;
       }
 
@@ -874,59 +880,79 @@
       `).join("");
     }
 
-    // ==========================================
-    // 4. Actions (ยิง API ไปปรับปรุงข้อมูล)
-    // ==========================================
-
-    // [POST] เพิ่มวิชา
     async function addCompleted() {
+      // ดึงค่าให้ตรงกับ `addSchema` ใน completedCourse.routes.js แบบเป๊ะๆ 7 ตัว
       const courseId = document.getElementById("fCourseId").value;
+      const courseName = document.getElementById("fCourseName").value;
+      const category = document.getElementById("fCategory").value;
+      // credits ต้องเป็น Number()
+      const credits = Number(document.getElementById("fCredits").value); 
       const grade = document.getElementById("fGrade").value;
       const term = document.getElementById("fTerm").value;
 
-      if(!courseId || !term) return alert("กรุณาเลือกวิชาและกรอกเทอม");
+      if(!courseId || !courseName || !category || !term) {
+        return alert("กรุณากรอกข้อมูลให้ครบถ้วน");
+      }
 
-      const payload = { studentId: state.studentId, courseId, grade, term };
+      const payload = { 
+        studentId: state.studentId, 
+        courseId, 
+        courseName, 
+        category, 
+        credits, 
+        grade, 
+        term 
+      };
 
       try {
-        await fetch(`${API_BASE}/completed`, {
+        const res = await fetch(`${API_BASE}/completed-courses`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
         
-        // เคลียร์ฟอร์ม
-        document.getElementById("fCourseSelect").value = "";
-        autoFillCourseDetails();
-        document.getElementById("fTerm").value = "";
+        if(!res.ok) {
+          const errData = await res.json();
+          console.error("Zod Validation Error:", errData);
+          throw new Error("ข้อมูลไม่ตรง Schema ของ Backend");
+        }
 
-        // ดึงข้อมูลใหม่มาแสดง
+        // ล้างฟอร์ม
+        document.getElementById("fCourseSelect").value = "";
+        document.getElementById("fCourseId").value = "";
+        document.getElementById("fCourseName").value = "";
+        document.getElementById("fCategory").value = "";
+        document.getElementById("fCredits").value = "";
+        document.getElementById("fTerm").value = "";
+        
         await refreshAll();
-        alert("บันทึกสำเร็จ");
+        alert("บันทึกวิชาเรียบร้อยแล้ว");
       } catch (err) {
-        alert("จำลองการเพิ่มข้อมูล (เนื่องจาก API ไม่พร้อม)");
-        await refreshAll();
+        console.error(err);
+        alert("ไม่สามารถบันทึกข้อมูลได้ (กรุณาดู Console F12)");
       }
     }
 
-    // [PUT] แก้เกรด
     async function updateGrade(id, oldGrade) {
       const newGrade = prompt(`กรุณากรอกเกรดใหม่:`, oldGrade);
       if(!newGrade) return;
 
       try {
-        await fetch(`${API_BASE}/completed/${id}`, {
+        const res = await fetch(`${API_BASE}/completed-courses/${id}/grade`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
+          // ตรงตาม z.object({ grade: z.string().min(1) })
           body: JSON.stringify({ grade: newGrade.toUpperCase() })
         });
+        if(!res.ok) throw new Error("Update failed");
+        
         await refreshAll();
       } catch (err) {
-        alert("จำลองการแก้ข้อมูลสำเร็จ");
+        console.error(err);
+        alert("ไม่สามารถแก้ไขเกรดได้");
       }
     }
 
-    // [DELETE] ลบวิชา (Soft delete)
     async function softDeleteCourse(id) {
       if(!confirm("ต้องการลบวิชานี้ใช่ไหม?")) return;
 
@@ -934,41 +960,83 @@
         await fetch(`${API_BASE}/completed-courses/${id}`, { method: "DELETE" });
         await refreshAll();
       } catch (err) {
-        alert("จำลองการลบข้อมูลสำเร็จ");
+        console.error(err);
       }
     }
 
+    // ==========================================
+    // 6. Study Plan Actions (CRUD)
+    // ==========================================
+    async function loadPlan() {
+      try {
+        const res = await fetch(`${API_BASE}/study-plan/${state.studentId}`);
+        if(!res.ok) throw new Error();
+        const plan = await res.json();
+
+        document.getElementById("pProgram").value = plan.program || "";
+        document.getElementById("pVersion").value = plan.version || "";
+        document.getElementById("pVersionText").textContent = plan.version || "2026";
+        
+        // แมปค่ากลับเข้าไปที่ช่อง input
+        plan.categories.forEach(cat => {
+          if(cat.name === "Core") document.getElementById("pCore").value = cat.requiredCredits;
+          if(cat.name === "Major") document.getElementById("pMajor").value = cat.requiredCredits;
+          if(cat.name === "Free") document.getElementById("pFree").value = cat.requiredCredits;
+        });
+
+        document.getElementById("planPreview").textContent = JSON.stringify(plan, null, 2);
+      } catch (err) {
+        document.getElementById("planPreview").textContent = "ยังไม่มี Study Plan สำหรับนิสิตคนนี้";
+      }
+    }
+
+    async function savePlan() {
+      // ดึงค่าให้ตรงกับ `planSchema` ใน studyPlan.routes.js แบบเป๊ะๆ
+      // studentId, program, version, categories: array of {name, requiredCredits}
+      const payload = {
+        studentId: state.studentId,
+        program: document.getElementById("pProgram").value,
+        version: document.getElementById("pVersion").value,
+        categories: [
+          { name: "Core", requiredCredits: Number(document.getElementById("pCore").value) },
+          { name: "Major", requiredCredits: Number(document.getElementById("pMajor").value) },
+          { name: "Free", requiredCredits: Number(document.getElementById("pFree").value) }
+        ]
+      };
+
+      try {
+        const res = await fetch(`${API_BASE}/study-plan`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        
+        if(!res.ok) {
+          const errData = await res.json();
+          console.error("Zod Validation Error:", errData);
+          throw new Error("ข้อมูลไม่ตรง Schema ของ Backend");
+        }
+        
+        alert("บันทึก Study Plan สำเร็จ!");
+        await loadPlan();
+        await refreshAll();
+      } catch (err) {
+        alert("ไม่สามารถบันทึก Study Plan ได้ (ดู Console F12)");
+        console.error(err);
+      }
+    }
+
+    async function softDeletePlan() {
+      if(!confirm("แน่ใจหรือไม่ว่าต้องการลบ Study Plan ของคุณ?")) return;
+      try {
+        await fetch(`${API_BASE}/study-plan/${state.studentId}`, { method: "DELETE" });
+        alert("ลบ Study Plan เรียบร้อยแล้ว");
+        document.getElementById("planPreview").textContent = "ไม่มี Study Plan";
+        await refreshAll();
+      } catch (err) {
+        console.error(err);
+      }
+    }
   </script>
-  <script>
-const API_BASE = "http://localhost:8080/api";
-
-// Example: Fetch Study Plan
-async function fetchStudyPlan() {
-  try {
-    const res = await fetch(`${API_BASE}/study-plan`);
-    const data = await res.json();
-    console.log("Study Plan:", data);
-  } catch (err) {
-    console.error("Error fetching study plan:", err);
-  }
-}
-
-// Example: Register Course (MySQL)
-async function registerCourse(courseId) {
-  try {
-    const res = await fetch(`${API_BASE}/completed-courses`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ courseId })
-    });
-
-    const data = await res.json();
-    console.log("Registered:", data);
-  } catch (err) {
-    console.error("Registration failed:", err);
-  }
-}
-</script>
 </body>
 </html>
-
