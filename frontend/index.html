@@ -609,7 +609,7 @@
     // ==========================================
     // 1. Config & State
     // ==========================================
-    const API_BASE = "http://localhost:5000/api";
+    const API_BASE = "http://localhost:8080/api";
     
     const state = {
       studentId: localStorage.getItem("studentId") || null,
@@ -753,33 +753,88 @@
         if(!res.ok) throw new Error();
         state.coursesMaster = await res.json();
       } catch (err) {
-        // Fallback Data ถ้ายังไม่ได้ทำ API Master courses
+        // fallback ให้ตรง schema backend
         state.coursesMaster = [
-          { courseId: "01418112", courseName: "Programming I", category: "Core", credits: 3 },
-          { courseId: "01418113", courseName: "Programming II", category: "Core", credits: 3 },
-          { courseId: "01418211", courseName: "Software Engineering", category: "Major", credits: 3 },
-          { courseId: "01355112", courseName: "English I", category: "Free", credits: 3 }
+          { code: "01418112", title: "Programming I", credits: 3 },
+          { code: "01418113", title: "Programming II", credits: 3 },
+          { code: "01418211", title: "Software Engineering", credits: 3 },
+          { code: "01355112", title: "English I", credits: 3 }
         ];
       }
 
       const select = document.getElementById("fCourseSelect");
-      select.innerHTML = `<option value="">-- โปรดเลือกวิชา --</option>` + 
-        state.coursesMaster.map(c => `<option value="${c.courseId}">${c.courseId} - ${c.courseName}</option>`).join("");
-    }
+      select.innerHTML =
+        `<option value="">-- โปรดเลือกวิชา --</option>` +
+        state.coursesMaster
+          .map(c => `<option value="${c.code}">${c.code} - ${c.title}</option>`)
+          .join("");
+}
 
     function autoFillCourseDetails() {
       const val = document.getElementById("fCourseSelect").value;
-      const c = state.coursesMaster.find(x => x.courseId === val);
+      const c = state.coursesMaster.find(x => x.code === val);
+
       if(c) {
-        document.getElementById("fCourseId").value = c.courseId;
-        document.getElementById("fCourseName").value = c.courseName;
-        document.getElementById("fCategory").value = c.category;
+        document.getElementById("fCourseId").value = c.code;
+        document.getElementById("fCourseName").value = c.title;
         document.getElementById("fCredits").value = c.credits;
+
+        // backend ไม่มี category → ตั้ง default ไปเลย
+        document.getElementById("fCategory").value = "Core";
       }
     }
 
     // ==========================================
     // 4. Dashboard (Summary Data)
+    // ==========================================
+    async function fetchCompleted() {
+      if (!state.studentId) return;
+
+      try {
+        const res = await fetch(
+          `${API_BASE}/completed-courses/by-student/${state.studentId}`
+        );
+
+        if (!res.ok) throw new Error("โหลดข้อมูลไม่สำเร็จ");
+
+        const rows = await res.json();
+        const tbody = document.getElementById("completedTbody");
+
+        if (!rows || rows.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="6" style="text-align:center;">
+                ยังไม่มีวิชาที่บันทึก
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        tbody.innerHTML = rows.map(c => `
+          <tr>
+            <td>
+              <b>${c.courseId}</b><br>
+              <span class="mini">${c.courseName}</span>
+            </td>
+            <td>${c.category}</td>
+            <td>${c.credits}</td>
+            <td>${c.grade}</td>
+            <td>${c.term}</td>
+            <td>
+              <button onclick="updateGrade('${c._id}', '${c.grade}')">แก้ไข</button>
+              <button onclick="softDeleteCourse('${c._id}')">ลบ</button>
+            </td>
+          </tr>
+        `).join("");
+
+      } catch (err) {
+        console.error("fetchCompleted error:", err);
+      }
+    }
+
+    // ==========================================
+    // 5. Completed Courses (Add / Edit / Delete)
     // ==========================================
     async function fetchSummary() {
       let data = null;
@@ -793,18 +848,31 @@
       }
 
       // ดึงค่าตามตัวแปร Backend summary.service.ts
-      // data.totalCredits
-      // data.categories -> [ { category, required, earned, remaining, completed } ]
-      
+      const categoriesList = data.categories || [];
       const totalEarned = data.totalCredits || 0;
       let totalRequired = 0;
       let remainingTotal = 0;
 
-      if (data.categories) {
-        data.categories.forEach(c => {
-          totalRequired += c.required;
-          remainingTotal += c.remaining;
-        });
+      categoriesList.forEach(c => {
+        totalRequired += c.required;
+        remainingTotal += c.remaining;
+      });
+
+      if (categoriesList.length === 0) {
+        document.getElementById("stEarned").textContent = "0";
+        document.getElementById("stRequired").textContent = "0";
+        document.getElementById("stRemaining").textContent = "0";
+        document.getElementById("pctText").textContent = "0";
+        document.getElementById("bar").style.width = "0%";
+        document.getElementById("statusPill").textContent = "โปรดสร้าง Study Plan ก่อน";
+        document.getElementById("statusPill").className = "pill warn";
+        document.getElementById("catGrid").innerHTML = "";
+        
+        document.getElementById("remainingBox").innerHTML = 
+          `<div class="card" style="box-shadow:none; text-align:center; color: var(--muted);">
+            <b>ยังไม่มีข้อมูล กรุณาสร้าง Study Plan ก่อน</b>
+           </div>`;
+        return;
       }
 
       document.getElementById("stEarned").textContent = totalEarned;
@@ -818,7 +886,7 @@
       document.getElementById("statusPill").className = pct >= 100 ? "pill" : "pill warn";
 
       const grid = document.getElementById("catGrid");
-      grid.innerHTML = (data.categories || []).map(cat => `
+      grid.innerHTML = categoriesList.map(cat => `
         <div class="cat">
           <div class="row">
             <div><div style="font-weight:900">${cat.category}</div><div class="mini">ได้ ${cat.earned} / ต้อง ${cat.required}</div></div>
@@ -831,7 +899,7 @@
       `).join("");
 
       const remBox = document.getElementById("remainingBox");
-      const notDone = (data.categories || []).filter(c => !c.completed);
+      const notDone = categoriesList.filter(c => !c.completed);
       
       if(notDone.length === 0){
         remBox.innerHTML = `<div class="card" style="box-shadow:none; background: linear-gradient(180deg, rgba(0,106,78,.08), #fff)"><b>ครบตามแผนทุกหมวดแล้ว 🎉</b></div>`;
@@ -847,39 +915,6 @@
       }
     }
 
-    // ==========================================
-    // 5. Completed Courses (Add / Edit / Delete)
-    // ==========================================
-    async function fetchCompleted() {
-      let rows = [];
-      try {
-        const res = await fetch(`${API_BASE}/completed-courses/${state.studentId}`);
-        if(res.ok) rows = await res.json();
-      } catch (err) {}
-
-      const tbody = document.getElementById("completedTbody");
-      if(rows.length === 0){
-        tbody.innerHTML = `<tr><td colspan="6" class="mini" style="text-align:center;">ยังไม่มีรายการวิชาที่เรียนแล้ว</td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = rows.map(c => `
-        <tr>
-          <td><b>${c.courseId}</b><div class="mini">${c.courseName}</div></td>
-          <td><span class="tag">${c.category}</span></td>
-          <td>${c.credits}</td>
-          <td>${c.grade}</td>
-          <td>${c.term}</td>
-          <td>
-            <div class="row-actions">
-              <button class="btn ghost" onclick="updateGrade('${c._id}', '${c.grade}')">แก้เกรด</button>
-              <button class="btn danger" onclick="softDeleteCourse('${c._id}')">ลบ</button>
-            </div>
-          </td>
-        </tr>
-      `).join("");
-    }
-
     async function addCompleted() {
       // ดึงค่าให้ตรงกับ `addSchema` ใน completedCourse.routes.js แบบเป๊ะๆ 7 ตัว
       const courseId = document.getElementById("fCourseId").value;
@@ -890,7 +925,7 @@
       const grade = document.getElementById("fGrade").value;
       const term = document.getElementById("fTerm").value;
 
-      if(!courseId || !courseName || !category || !term) {
+      if(!courseId || !courseName || !term) {
         return alert("กรุณากรอกข้อมูลให้ครบถ้วน");
       }
 
