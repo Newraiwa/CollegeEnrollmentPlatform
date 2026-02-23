@@ -8,8 +8,7 @@ import { summaryRouter } from "./routes/summary.routes";
 import { demoRouter } from "./routes/demo.routes";
 import cors from "cors";
 
-// new imports for MySQL/Prisma routes
-import usersRouter from "./routes/users";
+import usersRouter from "./routes/users";   
 import coursesRouter from "./routes/courses";
 import enrollmentsRouter from "./routes/enrollments";
 
@@ -20,14 +19,12 @@ app.use(express.json());
 app.use(cors());
 app.get("/health", (_, res) => res.json({ ok: true }));
 
-// existing feature routes (Mongo-driven)
 app.use("/api/study-plan", studyPlanRouter);
 app.use("/api/completed-courses", completedCourseRouter);
 app.use("/api/summary", summaryRouter);
 app.use("/api/demo", demoRouter);
 
-// new MySQL/Prisma driven endpoints
+app.use("/api/users", usersRouter);  
 app.use("/api/register", registerRouter);
-app.use("/api/users", usersRouter);
 app.use("/api/courses", coursesRouter);
 app.use("/api/enrollments", enrollmentsRouter);
