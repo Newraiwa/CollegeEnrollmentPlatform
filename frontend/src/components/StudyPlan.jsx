@@ -26,7 +26,7 @@ export default function StudyPlan({ studentId, planData, refreshAll }) {
     };
 
     try {
-      const res = await fetch(`${API_BASE}/study-plan`, {
+      const res = await fetch(`${API_BASE}/studyplan`, {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
       });
       if(!res.ok) throw new Error("ข้อมูลไม่ตรง Schema");
@@ -36,13 +36,29 @@ export default function StudyPlan({ studentId, planData, refreshAll }) {
   };
 
   const softDeletePlan = async () => {
-    if(!window.confirm("แน่ใจหรือไม่ว่าต้องการลบ Study Plan ของคุณ?")) return;
-    try {
-      await fetch(`${API_BASE}/study-plan/${studentId}`, { method: "DELETE" });
-      alert("ลบ Study Plan เรียบร้อยแล้ว");
-      refreshAll();
-    } catch (err) { console.error(err); }
-  };
+  if (!window.confirm("แน่ใจหรือไม่ว่าต้องการลบ Study Plan ของคุณ?")) return;
+
+  try {
+    const res = await fetch(
+      `${API_BASE}/studyplan/student/${studentId}`,
+      { method: "DELETE" }
+    );
+
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("DELETE ERROR:", text);
+      alert("ลบไม่สำเร็จ");
+      return;
+    }
+
+    alert("ลบ Study Plan เรียบร้อยแล้ว");
+    refreshAll();
+
+  } catch (err) {
+    console.error(err);
+    alert("เกิดข้อผิดพลาด");
+  }
+};
 
   return (
     <section className="card">

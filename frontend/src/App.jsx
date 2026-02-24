@@ -15,7 +15,6 @@ function App() {
   const [summaryData, setSummaryData] = useState(null);
   const [studyPlanData, setStudyPlanData] = useState(null);
 
-  // Load Data เมื่อ Login สำเร็จ
   useEffect(() => {
     if (studentId) {
       refreshAll();
@@ -40,7 +39,7 @@ function App() {
 
   const fetchPlan = async () => {
     try {
-      const res = await fetch(`${API_BASE}/study-plan/${studentId}`);
+      const res = await fetch(`${API_BASE}/studyplan/${studentId}`);
       if (!res.ok) throw new Error();
       const plan = await res.json();
       setStudyPlanData(plan);
